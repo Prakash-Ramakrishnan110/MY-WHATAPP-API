@@ -2,6 +2,7 @@
   "name": "whatsapp-api",
   "version": "1.0.0",
   "type": "commonjs",
+  "license": "MIT",
   "scripts": {
     "start": "node server.js"
   },
