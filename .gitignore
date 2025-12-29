@@ -1,0 +1,3 @@
+node_modules/
+_IGNORE_session/
+session.data.json
