@@ -6,75 +6,76 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-let client;
+const PORT = process.env.PORT || 3000;
+let waClient = null;
 
-// Health check
+/* ================================
+   START WHATSAPP CLIENT
+================================ */
+create({
+  sessionId: "whatsapp-api",
+  multiDevice: true,
+  headless: true,
+  authTimeout: 0,
+  qrTimeout: 0,
+  restartOnCrash: true,
+})
+  .then((client) => {
+    waClient = client;
+    console.log("✅ WhatsApp Connected and Ready");
+  })
+  .catch((err) => {
+    console.error("❌ WhatsApp Init Error:", err);
+  });
+
+/* ================================
+   HEALTH CHECK
+================================ */
 app.get("/", (req, res) => {
   res.json({
     status: "WhatsApp API running",
-    whatsapp: client ? "connected" : "connecting"
+    whatsapp: waClient ? "connected" : "connecting",
   });
 });
 
-// Send message API
+/* ================================
+   SEND MESSAGE API
+================================ */
 app.post("/send", async (req, res) => {
   try {
+    if (!waClient) {
+      return res.status(503).json({
+        error: "WhatsApp not ready yet. Please try again.",
+      });
+    }
+
     const { to, message } = req.body;
 
     if (!to || !message) {
-      return res.status(400).json({ error: "to & message required" });
+      return res.status(400).json({
+        error: "to & message required",
+      });
     }
 
     const chatId = to.includes("@c.us") ? to : `${to}@c.us`;
 
-    await client.sendText(chatId, message);
+    await waClient.sendText(chatId, message);
 
-    res.json({
-      success: true,
+    return res.json({
+      status: "Message command sent",
       to: chatId,
-      message
     });
-
   } catch (err) {
-    console.error("SEND ERROR:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Send Error:", err.message);
+    return res.status(500).json({
+      error: err.message,
+    });
   }
 });
 
-// START SERVER
-const PORT = process.env.PORT || 3000;
+/* ================================
+   START SERVER
+================================ */
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-
-// START WHATSAPP
-(async () => {
-  try {
-    client = await create({
-      sessionId: "render-session",
-      headless: true,
-      qrTimeout: 0,
-      authTimeout: 0,
-      restartOnCrash: true,
-      disableSpins: true,
-      useChrome: true,
-      browserArgs: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--no-first-run",
-        "--no-zygote"
-      ]
-    });
-
-    console.log("✅ WhatsApp Connected and Ready");
-
-    client.onMessage(async (msg) => {
-      console.log("📩 Incoming:", msg.from, msg.body);
-    });
-
-  } catch (err) {
-    console.error("❌ WhatsApp launch failed:", err);
-  }
-})();

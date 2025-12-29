@@ -1,17 +1,18 @@
 {
   "name": "whatsapp-api",
   "version": "1.0.0",
-  "type": "commonjs",
-  "license": "MIT",
+  "description": "Custom WhatsApp API using open-wa",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "engines": {
-    "node": "18.x"
-  },
+  "license": "MIT",
   "dependencies": {
     "@open-wa/wa-automate": "^4.76.0",
-    "express": "^4.19.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }
